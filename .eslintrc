@@ -1,0 +1,34 @@
+{
+  "env": {
+    "browser": true,
+    "mocha": true,
+    "node": true
+  },
+
+  "plugins": [ "react" ],
+
+  "parserOptions": {
+    "sourceType": "module",
+    "ecmaVersion": 6,
+    "ecmaFeatures": {
+      "jsx": true,
+      "modules": true,
+    }
+  },
+
+  "rules": {
+    "no-undef": 2,
+    "no-unused-vars": 2,
+    "no-shadow": 2,
+
+    "react/jsx-uses-react": 2,
+    "react/jsx-no-undef": 2,
+    "react/jsx-uses-vars": 2,
+    "react/react-in-jsx-scope": 2,
+    "react/prop-types": 1,
+  },
+
+  "globals": {
+    "Promise": false
+  }
+}

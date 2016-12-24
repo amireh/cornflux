@@ -1,0 +1,53 @@
+{
+  "name": "cornflux",
+  "version": "1.0.2",
+  "description": "A dispatching library for React applications promoting data encapsulation.",
+  "main": "src/index.js",
+  "scripts": {
+    "build": "babel src -d lib",
+    "test": "karma start"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/amireh/cornflux.git"
+  },
+  "keywords": [
+    "react",
+    "architecture",
+    "data",
+    "event",
+    "action"
+  ],
+  "author": "Ahmad Amireh",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/amireh/cornflux/issues"
+  },
+  "homepage": "https://github.com/amireh/cornflux#readme",
+  "devDependencies": {
+    "babel-cli": "6.18.0",
+    "babel-core": "6.21.0",
+    "babel-loader": "6.2.10",
+    "babel-preset-es2015": "6.18.0",
+    "babel-preset-react": "6.16.0",
+    "chai": "3.5.0",
+    "karma": "1.3.0",
+    "karma-chrome-launcher": "2.0.0",
+    "karma-mocha": "1.3.0",
+    "karma-webpack": "1.8.1",
+    "mocha": "3.2.0",
+    "react": "15.4.1",
+    "react-dom": "15.4.1",
+    "react-drill": "2.2.0",
+    "react-schema": "2.0.0",
+    "webpack": "1.14.0"
+  },
+  "peerDependencies": {
+    "react": "0.14 || 15",
+    "react-dom": "0.14 || 15",
+    "react-schema": "2"
+  },
+  "dependencies": {
+    "warning": "3.0.0"
+  }
+}
