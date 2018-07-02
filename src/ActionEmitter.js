@@ -1,21 +1,13 @@
 import React, { PropTypes } from 'react';
 import warning from 'warning';
 import invariant from 'invariant';
-import createReactClass from 'create-react-class';
 
 const ActionEmitter = (Component, { actions, propName = 'dispatch' }) => {
   invariant(Array.isArray(actions),
     `Missing required argument "actions" by ActionEmitter for component "${Component.displayName}}".`
   )
 
-  return createReactClass({
-    displayName: `ActionEmitter(${Component.displayName})`,
-
-    contextTypes: {
-      availableActions: PropTypes.arrayOf(PropTypes.string).isRequired,
-      dispatch: PropTypes.func.isRequired,
-    },
-
+  class WithActions extends React.Component {
     componentWillMount() {
       if (process.env.NODE_ENV !== 'production') {
         const availableActions = this.context.availableActions;
@@ -29,12 +21,20 @@ const ActionEmitter = (Component, { actions, propName = 'dispatch' }) => {
           stringifyList(unknownActions, "  ")
         );
       }
-    },
+    }
 
     render() {
       return <Component {...this.props} {...{ [propName]: this.context.dispatch }} />
     }
-  })
+  };
+
+  WithActions.displayName = `ActionEmitter(${Component.displayName})`;
+  WithActions.contextTypes = {
+    availableActions: PropTypes.arrayOf(PropTypes.string).isRequired,
+    dispatch: PropTypes.func.isRequired,
+  };
+
+  return WithActions;
 }
 
 function stringifyList(list, indent = "") {

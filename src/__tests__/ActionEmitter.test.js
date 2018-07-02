@@ -3,7 +3,6 @@ import { render } from 'react-dom';
 import { assert, createContainer, createSandbox, drill } from '../TestUtils';
 import ActionProvider from '../ActionProvider';
 import ActionEmitter from '../ActionEmitter';
-import createReactClass from 'create-react-class';
 
 describe('ActionEmitter', function() {
   let sinon
@@ -19,19 +18,19 @@ describe('ActionEmitter', function() {
 
   it('fails if no actions were provided', function() {
     assert.throws(() => {
-      ActionEmitter(createReactClass({ render: () => null }), { actions: null })
+      ActionEmitter(React.createClass({ render: () => null }), { actions: null })
     }, /Missing required argument "actions" by ActionEmitter for component/)
   });
 
   it('warns if there are unknown actions at that point in three', function() {
-    const Emitter = ActionEmitter(createReactClass({
+    const Emitter = ActionEmitter(React.createClass({
       displayName: 'MyEmitter',
       render() {
         return <div />
       }
     }), { actions: [ 'speak' ] })
 
-    const Provider = ActionProvider(createReactClass({
+    const Provider = ActionProvider(React.createClass({
       render() {
         return (
           <Emitter />
@@ -57,7 +56,7 @@ describe('ActionEmitter', function() {
   });
 
   it('passes the dispatch function', function() {
-    const EmitterType = createReactClass({
+    const EmitterType = React.createClass({
       displayName: 'MyEmitter',
       render() {
         return <div />
@@ -65,7 +64,7 @@ describe('ActionEmitter', function() {
     })
 
     const Emitter = ActionEmitter(EmitterType, { actions: [] })
-    const Provider = ActionProvider(createReactClass({
+    const Provider = ActionProvider(React.createClass({
       render() {
         return (
           <Emitter />

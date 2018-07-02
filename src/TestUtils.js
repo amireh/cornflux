@@ -1,7 +1,27 @@
 import ReactDOM from 'react-dom';
-export { createSandbox } from 'sinon';
+import sinon, { createSandbox } from 'sinon';
+import { assert } from 'chai';
+
+sinon.assert.expose(assert, { prefix: "" })
+
 export { drill, m } from 'react-drill';
-export { assert } from 'chai';
+export { createSandbox };
+export { assert };
+
+export function createSinonSandbox(mochaSuite) {
+  let sandbox
+
+  mochaSuite.beforeEach(() => {
+    sandbox = createSandbox()
+  })
+
+  mochaSuite.afterEach(() => {
+    sandbox.restore()
+    sandbox = null
+  })
+
+  return { get: () => sandbox }
+}
 
 export function createContainer(fn, options = { attachToDOM: false }) {
   const container = document.createElement('div');

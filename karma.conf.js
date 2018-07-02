@@ -7,9 +7,28 @@ module.exports = function (config) {
       'karma-chrome-launcher',
       'karma-mocha',
       'karma-webpack',
+      'karma-coverage',
     ],
 
     browsers: [ 'Chrome' ],
+
+    coverageReporter: {
+      dir: path.join(root, 'coverage'),
+      subdir: '.',
+      reporters: [
+        { type: 'json', file: 'report.json' },
+        { type: 'html' },
+        { type: 'text-summary' }
+      ],
+      check: {
+        global: {
+          branches: 75,
+          functions: 75,
+          lines: 75,
+          statements: 75,
+        }
+      },
+    },
 
     frameworks: [
       'mocha'
@@ -23,16 +42,26 @@ module.exports = function (config) {
       'src/__tests__/*.test.js': [ 'webpack' ]
     },
 
-    reporters: [ 'dots' ],
+    reporters: [ 'dots', 'coverage' ],
 
     webpack: {
-      externals: { 'Promise': true },
+      mode: 'development',
       module: {
-        loaders: [
+        rules: [
           {
             test: /\.js$/,
             include: path.join(root, 'src'),
-            loader: 'babel'
+            loader: 'babel-loader',
+            options: {
+              babelrc: false,
+              presets: [ 'env', 'react' ],
+              plugins: [
+                ['istanbul', {
+                  exclude:
+                    "**/*.test.js",
+                }]
+              ]
+            }
           }
         ]
       }

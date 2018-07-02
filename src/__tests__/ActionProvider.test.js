@@ -1,67 +1,110 @@
 import React, { PropTypes } from 'react';
 import { render } from 'react-dom';
-import { assert, createContainer, drill, m } from '../TestUtils';
+import { assert, createContainer, createSinonSandbox, drill, m } from '../TestUtils';
 import ActionProvider from '../ActionProvider';
 import ActionEmitter from '../ActionEmitter';
 
 describe('ActionProvider', function() {
-  it('works', function() {
-    const MyEmitter = ActionEmitter(React.createClass({
-      propTypes: {
-        dispatch: PropTypes.func.isRequired,
-      },
+  const sinonSuite = createSinonSandbox(this)
 
-      render() {
-        return <button onClick={this.emitClick} children="Click me!" />
-      },
+  describe('dispatching', function() {
+    let EmitterType, ProviderType
+    let Emitter, Provider, actions
 
-      emitClick() {
-        this.props.dispatch('speak', 'quack!');
+    beforeEach(() => {
+      const sinon = sinonSuite.get()
+
+      actions = {
+        speak: sinon.stub()
       }
-    }), { actions: [ 'speak' ] })
 
-    const MyType = React.createClass({
-      componentDidMount() {
-        this.someInstanceVariable = 1;
-      },
+      EmitterType = React.createClass({
+        propTypes: {
+          dispatch: PropTypes.func.isRequired,
+        },
 
-      render() {
-        return (
-          <div>
-            <span>{this.props.name}</span>
+        render() {
+          return <button onClick={this.emitClick} children="Click me!" />
+        },
 
-            <MyEmitter />
-          </div>
-        );
-      }
+        emitClick() {
+          this.props.dispatch('speak', 'a', 'b', 1, 2);
+        }
+      })
+
+      Emitter = ActionEmitter(EmitterType, {
+        actions: [ 'speak' ]
+      })
+
+      ProviderType = React.createClass({
+        componentDidMount() {
+          this.someInstanceVariable = 1;
+        },
+
+        render() {
+          return (
+            <Emitter />
+          );
+        }
+      })
+
+      Provider = ActionProvider(ProviderType, { actions })
+    })
+
+    it('invokes action handlers', function() {
+      createContainer(container => {
+        const instance = render(<Provider />, container);
+
+        drill(instance).find(Emitter).find('button').click();
+
+        assert.calledOnce(actions.speak)
+      });
     });
 
-    const calls = [];
+    it('it provides me access to the decorated component', function() {
+      createContainer(container => {
+        const instance = render(<Provider />, container);
 
-    const handleAction = (container, type, payload) => {
-      calls.push([container, type, payload]);
-    }
+        drill(instance).find(Emitter).find('button').click();
 
-    const MyActionProviderType = ActionProvider(MyType, {
-      actions: { speak: handleAction },
+        assert.equal(actions.speak.getCall(0).args[0].someInstanceVariable, 1);
+      });
     });
 
-    createContainer(container => {
-      const instance = render(<MyActionProviderType name="Booboo!" />,
-        container
-      );
+    it('forwards arguments to action handlers', function() {
+      createContainer(container => {
+        const instance = render(<Provider />, container);
+        const sinon = sinonSuite.get()
 
-      drill(instance).find('span', m.hasText('Booboo!'));
+        drill(instance).find(Emitter).find('button').click();
 
-      drill(instance).find(MyEmitter).find('button').click();
+        sinon.assert.calledWith(
+          actions.speak,
+          sinon.match.object, // component
+          'a', 'b', 1, 2
+        )
+      });
+    })
 
-      assert.equal(calls.length, 1);
-      assert.equal(calls[0][0].someInstanceVariable, 1,
-        "it provides me access to the decorated component"
-      );
+    it('provides "dispatch" and "propagate" to action handlers', function() {
+      createContainer(container => {
+        const instance = render(<Provider />, container);
+        const sinon = sinonSuite.get()
 
-    });
-  });
+        drill(instance).find(Emitter).find('button').click();
+
+        sinon.assert.calledWithExactly(
+          actions.speak,
+          sinon.match.any, // component
+          sinon.match.any, sinon.match.any, sinon.match.any, sinon.match.any, // args
+          sinon.match({
+            dispatch: sinon.match.func,
+            propagate: sinon.match.func
+          })
+        )
+      })
+    })
+  })
 
   it('can be composed', function() {
     const calls = [];

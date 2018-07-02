@@ -1,26 +1,39 @@
 const webpack = require('webpack');
-const common = require('./common');
+const path = require('path');
+const root = path.resolve(__dirname);
+// const BundleAnalyzerPlugin = require('webpack-bundle-analyzer').BundleAnalyzerPlugin;
 
 module.exports = {
-  devtool: 'eval',
+  mode: 'production',
 
-  resolve: common.resolve,
+  output: {
+    filename: 'cornflux.js',
+    path: path.join(root, 'dist'),
+  },
+
+  externals: {
+    'react': 'React',
+    'react-dom': 'ReactDOM',
+  },
+
+  module: {
+    rules: [
+      {
+        test: /\.js$/,
+        include: [ path.join(root, 'src') ],
+        exclude: [ /\.test.js$/ ],
+        loader: 'babel-loader',
+        options: {
+          presets: [ 'env', 'react' ]
+        }
+      }
+    ]
+  },
 
   plugins: [
     new webpack.DefinePlugin({
-      'process.env.NODE_ENV': JSON.stringify(process.env.NODE_ENV || 'development'),
+      'process.env.NODE_ENV': JSON.stringify(process.env.NODE_ENV),
     }),
+    // new BundleAnalyzerPlugin(),
   ],
-
-  module: common.getModuleConfigWithCustomLoaders(x => {
-    if (x.id === 'js') {
-      return Object.assign({}, x, {
-        loaders: undefined,
-        loader: 'babel',
-      });
-    }
-    else {
-      return x;
-    }
-  }),
 };
