@@ -1,1 +1,6 @@
+/coverage
+/doc
 /src/__tests__
+/.eslintrc.js
+/.nvmrc
+/karma.conf.js
