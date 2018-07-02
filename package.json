@@ -6,6 +6,8 @@
   "module": "src/index.js",
   "scripts": {
     "build": "NODE_ENV=production webpack",
+    "lint": "eslint src",
+    "prepublish": "npm run lint && npm run test -- --single-run && npm run build",
     "test": "karma start"
   },
   "repository": {
@@ -33,6 +35,8 @@
     "babel-preset-env": "1.7.0",
     "babel-preset-react": "6.24.1",
     "chai": "3.5.0",
+    "eslint": "5.0.1",
+    "eslint-plugin-react": "7.10.0",
     "karma": "2.0.4",
     "karma-chrome-launcher": "2.2.0",
     "karma-coverage": "1.1.2",

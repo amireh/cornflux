@@ -1,8 +1,8 @@
-{
+module.exports = {
   "env": {
     "browser": true,
-    "mocha": true,
-    "node": true
+    "mocha": false,
+    "node": false,
   },
 
   "plugins": [ "react" ],
@@ -29,6 +29,18 @@
   },
 
   "globals": {
-    "Promise": false
-  }
+    "Promise": false,
+    "process": false
+  },
+  overrides: [
+    {
+      files: [ '**/*.test.js' ],
+      env: {
+        mocha: true
+      },
+      rules: {
+        "react/prop-types": 0,
+      }
+    }
+  ]
 }

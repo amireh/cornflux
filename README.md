@@ -1,22 +1,27 @@
-# cornflux (beta)
+# cornflux
 
 A library for dispatching events in a React application using the react [context](https://facebook.github.io/react/docs/context.html) as a data bus.
 
-## Motivation
+The goal of this library is to achieve a layer of _data isolation_ where
+application state is confined to "data components" that can only be interfaced
+with by other components via action functions.
 
-The TL;DR version: data isolation. Protect your application data and state 
-storage in components that can only be interfaced with via _actions_.
-
-The longer version can be found in [this post on medium](https://medium.com/@amireh/on-privacy-with-react-context-aa77ffd08509#.qz4awmpol)
+The longer version can be found in [this post on
+medium](https://medium.com/@amireh/on-privacy-with-react-context-aa77ffd08509#.qz4awmpol)
 if you have the patience.
 
 ## Installation
 
 ```shell
 # make sure you have the dependencies first:
-npm install --save react react-dom react-schema
+npm install --save react react-dom
 npm install --save cornflux
 ```
+
+The source code is not transpiled; you will need a transpiler like
+[Babel.js](http://babeljs.io) to consume it. However, a built-version is
+provided under `dist/` but it expects `React` and `ReactDOM` to be available on
+`window`.
 
 ## Usage
 
@@ -28,9 +33,8 @@ are ones that request an action be performed.
 
 ### Handling actions
 
-Construct an "acting" version of the component that should be performing 
-side-effects with the `ActionProvider` decorator and define the action 
-handlers:
+Use the `ActionProvider` decorator to construct a version of the component that
+is able to receive action requests and carry them out.
 
 ```javascript
 import { ActionProvider } from 'cornflux';
@@ -59,9 +63,9 @@ export default MyActingComponent;
 
 ### Triggering actions
 
-Construct an "emitting" version of the component that needs to request an 
-action be performed with the `ActionEmitter` decorator. You must explicitly 
-specify the list of action names that it will trigger.
+Use the `ActionEmitter` decorator to construct a version of a component that
+needs to dispatch action requests. You must explicitly specify which actions
+the component is allowed to dispatch.
 
 ```javascript
 import { ActionEmitter } from 'cornflux';
@@ -108,61 +112,35 @@ The handler signature is as such:
 ```javascript
 (
   state: Object,
-  payload: Object,
-  Object.<{
+  payload: ...Any,
+  delegate: {
     dispatch: (String, Object) -> Any,
     propagate: () -> Any
-  }>
-) -> Any
+  }
+) -> Promise
 ```
 
-The first argument, `state`, is either the reduced state of the container
-if a `reducer` was defined, otherwise it's the component instance itself.
+The first argument, `state`, is either the reduced state of the container if
+`reduce` was defined, otherwise it's the component instance itself.
 
 The `payload` argument is the action payload that was provided when the action
-was emitted.
+was emitted. It is "spread out" to as many arguments the dispatch call was
+provided by an emitter (vararg).
 
-The third argument is an object containing two functions:
+The last argument is an object containing two functions:
 
-- `dispatch` which lets your handler dispatch other events. The signature is
-  is similar to emitter's `dispatch`.
-- `propagate` is a callback for yielding (or "bubbling") the action to a 
-  provider higher in the chain. Note that it accepts NO parameters, the action
-  is yielded as-is.
+- `dispatch` to dispatch other events to the same provider. The signature is is
+  similar to emitter's `dispatch`.
+- `propagate` to yield (or "bubble") the action to a provider higher in the
+  tree. Note that it accepts NO parameters; the action is yielded as-is.
 
-#### ?displayName: `String`
+#### ?reduce: `(component) -> Object`
 
-A custom display name for the decorated component.
+Given the rendered component instance, generate the state to pass to action
+handlers.
 
-Defaults to: `ActionProvider($ORIGINAL_COMPONENT_DISPLAY_NAME)`
-
-#### ?reducer: `(component) -> Object`
-
-A funcion for "reducing" the component instance into some state that the action
-handlers need.
-
-This option gives you a greater degree of what the action handlers may end up
-touching, if you're really paranoid.
-
-Defaults to: `(x) -> x`. The identity function where the component instance 
-itself is passed through.
-
-#### ?serviceWrapper: `(Any) -> Any`
-
-Compatibility option for applications that use promises or relied on earlier
-dispatchers always generating promises (or something alike.)
-
-The function will receive the return value of the action handler and can
-augment it in any way it sees fit.
-
-Defaults to: `(x) -> x`
-
-#### ?verbose: `Boolean`
-
-Turn this on if you want diagnostic messages be output to the console for 
-debugging.
-
-Defaults to: `false`
+Defaults to: the identity function where the component instance itself is
+passed through (which exposes `props`, `state`, `setState`, etc.)
 
 ### ActionEmitter: `(Component, options: Object) -> Component`
 

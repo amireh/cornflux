@@ -1,6 +1,6 @@
 import React from 'react';
 import { render } from 'react-dom';
-import { assert, createContainer, createSandbox, drill } from '../TestUtils';
+import { assert, createContainer, createSandbox, drill } from './TestUtils';
 import ActionProvider from '../ActionProvider';
 import ActionEmitter from '../ActionEmitter';
 

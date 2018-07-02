@@ -12,7 +12,7 @@ export function createSinonSandbox(mochaSuite) {
   let sandbox
 
   mochaSuite.beforeEach(() => {
-    sandbox = createSandbox()
+    sandbox = createSandbox({ useFakeTimers: false })
   })
 
   mochaSuite.afterEach(() => {
@@ -36,13 +36,14 @@ export function createContainer(fn, options = { attachToDOM: false }) {
   }
 
   if (fn.length === 2) {
-    fn(container, cleanup);
+    return fn(container, cleanup);
   }
   else {
     let raisedError;
+    let retValue;
 
     try {
-      fn(container);
+      retValue = fn(container);
     }
     catch (e) {
       raisedError = e;
@@ -52,6 +53,9 @@ export function createContainer(fn, options = { attachToDOM: false }) {
 
       if (raisedError) {
         throw raisedError;
+      }
+      else {
+        return retValue;
       }
     }
   }

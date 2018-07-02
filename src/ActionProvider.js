@@ -1,14 +1,8 @@
 import React, { PropTypes } from 'react';
+import invariant from 'invariant';
 
 const Identity = x => x;
-
-const ActionProvider = function(Component, {
-  actions,
-  displayName,
-  reducer = Identity,
-  serviceWrapper = Identity,
-  passDispatchProp = true,
-}) {
+const ActionProvider = function(Component, { actions, reduce = Identity }) {
   const actionNames = Object.keys(actions);
   class WithActions extends React.Component {
     getChildContext() {
@@ -21,6 +15,7 @@ const ActionProvider = function(Component, {
     constructor() {
       super()
 
+      this.unmounted = false;
       this.actionBuffer = [];
       this.bindings = {
         dispatchAction: this.dispatchAction.bind(this)
@@ -31,23 +26,21 @@ const ActionProvider = function(Component, {
       this.flushQueuedActions();
     }
 
-    componentDidUpdate() {
-      this.flushQueuedActions();
-    }
-
     componentWillUnmount() {
+      this.bindings = null;
+      this.unmounted = true;
       // TODO: possible leak here? what about pending promises?
       this.actionBuffer = null;
     }
 
     render() {
-      const decoratorProps = {};
-
-      if (passDispatchProp) {
-        decoratorProps.dispatch = this.bindings.dispatchAction;
-      }
-
-      return <Component ref="container" {...decoratorProps} {...this.props} />
+      return (
+        <Component
+          ref="component"
+          dispatch={this.bindings.dispatchAction}
+          {...this.props}
+        />
+      )
     }
 
     dispatchAction(type, ...payload) {
@@ -59,27 +52,33 @@ const ActionProvider = function(Component, {
       // dispatches an action during the componentWillMount or componentDidMount
       // hook since *theirs* runs before *ours* so our container will not be
       // ready at that point yet.
-      else if (!this.refs.container) {
+      else if (!this.refs.component) {
         return this.dispatchActionWhenReady(type, payload);
       }
       else {
         const actionHandler = actions[type];
-        const state = reducer(this.refs.container);
+        const state = reduce(this.refs.component);
 
         // TODO: validate payload
 
-        return serviceWrapper(
-          actionHandler(state, ...payload, {
-            propagate: this.propagateAction.bind(this, type, ...payload),
-            dispatch: this.bindings.dispatchAction,
-          })
-        );
+        const returnValue = actionHandler(state, ...payload, {
+          propagate: this.propagateAction.bind(this, type, ...payload),
+          dispatch: this.bindings.dispatchAction,
+        })
+
+        invariant(returnValue && typeof returnValue.then === 'function',
+          `Handler for action "${type}" yielded a non-Promise value`
+        )
+
+        return returnValue;
       }
     }
 
     dispatchActionWhenReady(type, payload) {
       return new Promise((resolve, reject) => {
-        if (!this.isMounted()) {
+        // possible race condition; child component dispatches an action while
+        // the provider is being unmounted
+        if (this.unmounted) {
           reject();
         }
         else {
@@ -104,7 +103,7 @@ const ActionProvider = function(Component, {
     }
   };
 
-  WithActions.displayName = displayName || `ActionProvider(${Component.displayName})`;
+  WithActions.displayName = `ActionProvider(${Component.displayName})`;
   WithActions.contextTypes = {
     availableActions: PropTypes.arrayOf(PropTypes.string),
     dispatch: PropTypes.func,

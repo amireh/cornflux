@@ -10,7 +10,21 @@ module.exports = function (config) {
       'karma-coverage',
     ],
 
-    browsers: [ 'Chrome' ],
+    browsers: [ 'ChromeWithoutSandbox' ],
+
+    customLaunchers: {
+      ChromeWithoutSandbox: {
+        base: 'ChromeHeadless',
+        flags: [
+          '--no-default-browser-check',
+          '--no-first-run',
+          '--disable-default-apps',
+          '--disable-popup-blocking',
+          '--disable-translate',
+          '--disable-web-security',
+        ]
+      }
+    },
 
     coverageReporter: {
       dir: path.join(root, 'coverage'),
@@ -19,15 +33,7 @@ module.exports = function (config) {
         { type: 'json', file: 'report.json' },
         { type: 'html' },
         { type: 'text-summary' }
-      ],
-      check: {
-        global: {
-          branches: 75,
-          functions: 75,
-          lines: 75,
-          statements: 75,
-        }
-      },
+      ]
     },
 
     frameworks: [
@@ -57,8 +63,9 @@ module.exports = function (config) {
               presets: [ 'env', 'react' ],
               plugins: [
                 ['istanbul', {
-                  exclude:
-                    "**/*.test.js",
+                  exclude: [
+                    "**/__tests__"
+                  ]
                 }]
               ]
             }
@@ -78,7 +85,9 @@ module.exports = function (config) {
     },
 
     webpackServer: {
-      noInfo: true
+      noInfo: true,
+      quiet: true,
+      stats: false
     }
   });
 };

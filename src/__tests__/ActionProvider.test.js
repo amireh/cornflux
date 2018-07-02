@@ -1,6 +1,6 @@
 import React, { PropTypes } from 'react';
 import { render } from 'react-dom';
-import { assert, createContainer, createSinonSandbox, drill, m } from '../TestUtils';
+import { assert, createContainer, createSinonSandbox, drill, m } from './TestUtils';
 import ActionProvider from '../ActionProvider';
 import ActionEmitter from '../ActionEmitter';
 
@@ -15,7 +15,7 @@ describe('ActionProvider', function() {
       const sinon = sinonSuite.get()
 
       actions = {
-        speak: sinon.stub()
+        speak: sinon.spy(() => Promise.resolve())
       }
 
       EmitterType = React.createClass({
@@ -61,13 +61,16 @@ describe('ActionProvider', function() {
       });
     });
 
-    it('it provides me access to the decorated component', function() {
+    it('it provides me access to component by default', function() {
       createContainer(container => {
-        const instance = render(<Provider />, container);
+        const instance = render(<Provider foo={1} />, container);
 
         drill(instance).find(Emitter).find('button').click();
 
-        assert.equal(actions.speak.getCall(0).args[0].someInstanceVariable, 1);
+        assert.equal(
+          actions.speak.getCall(0).args[0],
+          drill(instance).find(ProviderType).component
+        );
       });
     });
 
@@ -104,12 +107,161 @@ describe('ActionProvider', function() {
         )
       })
     })
+
+    it('rejects dispatches made after the provider is unmounted', function() {
+      let instance, emitter
+
+      createContainer(container => {
+        instance = render(<Provider />, container);
+        emitter = drill(instance).find(EmitterType).component
+      })
+
+      emitter.props.dispatch('speak')
+      assert.notCalled(actions.speak)
+    })
+  })
+
+  describe('delayed dispatching', function() {
+    let EmitterType, ProviderType
+    let Emitter, Provider, actions
+
+    beforeEach(() => {
+      const sinon = sinonSuite.get()
+
+      actions = {
+        speak: sinon.spy(() => Promise.resolve())
+      }
+
+      EmitterType = React.createClass({
+        propTypes: {
+          dispatch: PropTypes.func.isRequired,
+        },
+
+        componentWillMount() {
+          this.props.dispatch('speak', 'quack!');
+        },
+
+        render() {
+          return <div />
+        }
+      })
+
+      Emitter = ActionEmitter(EmitterType, {
+        actions: [ 'speak' ]
+      })
+
+      ProviderType = React.createClass({
+        render() {
+          return (
+            <Emitter />
+          );
+        }
+      })
+
+      Provider = ActionProvider(ProviderType, { actions })
+    })
+
+    it('accepts dispatches done during "componentWillMount"', function() {
+      createContainer(container => {
+        render(<Provider />, container);
+
+        assert.calledOnce(actions.speak)
+      });
+    });
+  });
+
+  describe('propagating', function() {
+    let EmitterType, SomeComponent
+    let Emitter, Provider, actions
+    let TopLevelProvider, TopLevelComponent, TopLevelActions
+
+    beforeEach(() => {
+      actions = {
+        speak: () => Promise.resolve(),
+      }
+
+      TopLevelActions = {
+        speak: () => Promise.resolve(),
+      }
+
+      EmitterType = React.createClass({
+        propTypes: {
+          dispatch: PropTypes.func.isRequired,
+        },
+
+        render() {
+          return <div />
+        }
+      })
+
+      Emitter = ActionEmitter(EmitterType, {
+        actions: [ 'speak' ]
+      })
+
+      SomeComponent = React.createClass({
+        render() {
+          return (
+            <Emitter />
+          );
+        }
+      })
+
+      Provider = ActionProvider(SomeComponent, { actions })
+
+      TopLevelComponent = React.createClass({
+        render() {
+          return (
+            <div>{this.props.children}</div>
+          );
+        }
+      })
+
+      TopLevelProvider = ActionProvider(TopLevelComponent, { actions: TopLevelActions })
+    })
+
+    it('lets me propagate the action to another provider up the tree', function() {
+      const sinon = sinonSuite.get()
+
+      sinon.stub(TopLevelActions, 'speak').callsFake(() => Promise.resolve())
+      sinon.stub(actions, 'speak').callsFake((_, { propagate }) => propagate())
+
+      return createContainer(container => {
+        const instance = render(<TopLevelProvider><Provider /></TopLevelProvider>, container);
+
+        return drill(instance).find(EmitterType).component.props.dispatch('speak').then(() => {
+          assert.calledOnce(actions.speak)
+          assert.calledOnce(TopLevelActions.speak)
+        })
+      });
+    });
+
+    it('rejects a propagate made for an unsupported action', function() {
+      const sinon = sinonSuite.get()
+
+      return createContainer(container => {
+        const instance = render(<Provider />, container);
+        const fake = sinon.spy((_state, _payload, { propagate }) => {
+          return propagate()
+        })
+
+        sinon.stub(actions, 'speak').callsFake(fake)
+
+        return drill(instance).find(EmitterType).component.props.dispatch('speak', 'some arg').then(() => {
+          throw new Error('should not have passed')
+        }, err => {
+          assert.called(fake)
+          assert.match(err.message, 'Unknown action "speak"')
+        })
+      })
+
+    })
   })
 
   it('can be composed', function() {
     const calls = [];
     const handleAction = (container, type, payload) => {
       calls.push([container, type, payload]);
+      return Promise.resolve()
     };
 
     const MyEmitter = ActionEmitter(React.createClass({

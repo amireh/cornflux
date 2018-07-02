@@ -9,6 +9,7 @@ const ActionEmitter = (Component, { actions, propName = 'dispatch' }) => {
 
   class WithActions extends React.Component {
     componentWillMount() {
+      // istanbul ignore else
       if (process.env.NODE_ENV !== 'production') {
         const availableActions = this.context.availableActions;
         const unknownActions = actions.filter(action => {
@@ -24,7 +25,12 @@ const ActionEmitter = (Component, { actions, propName = 'dispatch' }) => {
     }
 
     render() {
-      return <Component {...this.props} {...{ [propName]: this.context.dispatch }} />
+      return (
+        <Component
+          {...this.props}
+          {...{ [propName]: this.context.dispatch }}
+        />
+      )
     }
   };
 
