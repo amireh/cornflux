@@ -11,6 +11,7 @@ const ActionProvider = function(Component, {
   reducer = Identity,
   serviceWrapper = Identity,
   verbose = false,
+  passDispatchProp = true,
 }) {
   const debugLog = verbose ? console.debug.bind(console) : Function.prototype;
 
@@ -52,7 +53,13 @@ const ActionProvider = function(Component, {
     },
 
     render() {
-      return <Component ref="container" {...this.props} />
+      const decoratorProps = {};
+
+      if (passDispatchProp) {
+        decoratorProps.dispatch = this.dispatchAction;
+      }
+
+      return <Component ref="container" {...decoratorProps} {...this.props} />
     },
 
     dispatchAction(type, payload) {

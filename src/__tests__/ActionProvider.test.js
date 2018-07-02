@@ -1,12 +1,10 @@
-import { assert } from 'chai';
 import React, { PropTypes } from 'react';
 import { render } from 'react-dom';
-import { createContainer } from '../TestUtils';
-import { drill, m } from 'react-drill';
+import { assert, createContainer, drill, m } from '../TestUtils';
 import ActionProvider from '../ActionProvider';
 import ActionEmitter from '../ActionEmitter';
 
-describe('cornflux', function() {
+describe('ActionProvider', function() {
   it('works', function() {
     const MyEmitter = ActionEmitter(React.createClass({
       propTypes: {

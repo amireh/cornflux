@@ -1,4 +1,7 @@
 import ReactDOM from 'react-dom';
+export { createSandbox } from 'sinon';
+export { drill, m } from 'react-drill';
+export { assert } from 'chai';
 
 export function createContainer(fn, options = { attachToDOM: false }) {
   const container = document.createElement('div');

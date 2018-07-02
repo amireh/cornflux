@@ -1,6 +1,6 @@
 {
   "name": "cornflux",
-  "version": "1.0.2",
+  "version": "1.1.0",
   "description": "A dispatching library for React applications promoting data encapsulation.",
   "main": "src/index.js",
   "scripts": {
@@ -40,6 +40,7 @@
     "react-dom": "15.4.1",
     "react-drill": "2.2.0",
     "react-schema": "2.0.0",
+    "sinon": "6.0.1",
     "webpack": "1.14.0"
   },
   "peerDependencies": {
@@ -48,6 +49,8 @@
     "react-schema": "2"
   },
   "dependencies": {
+    "create-react-class": "15.6.3",
+    "invariant": "2.2.4",
     "warning": "3.0.0"
   }
 }
